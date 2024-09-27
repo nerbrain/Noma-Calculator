@@ -23,19 +23,31 @@ function investment_calculator()
         <!-- Left Side: Sliders for inputs -->
         <div style="width: 45%; border: 1px solid #e5e5e5; padding: 20px; border-radius: 8px;">
             <h4>How much do you want to invest?</h4>
-            <label for="initial-investment">Initial Investment (KSH): </label>
+            <div class="lv"> 
+                <label for="initial-investment" class="label">Initial Investment (KSH): </label>
+                <span id="investment-value">50,000</span>
+            </div>
             <input type="range" id="initial-investment" min="10000" max="1000000" step="5000" value="50000" oninput="updateInvestmentLabel()" class="range">
-            <p>Initial Investment: KSH <span id="investment-value">50,000</span></p>
+            
+            &nbsp;
 
-            <label for="property-growth">Property value growth (5 year): </label>
-            <input type="range" id="property-growth" min="0" max="100" step="1" value="30" oninput="updatePropertyGrowthLabel()">
-            <p>Property Value Growth: <span id="property-growth-value">30</span>%</p>
+            <div class="lv">
+                <label for="property-growth" class="label">Expected annual property growth: </label>
+                <div><span id="property-growth-value">30</span>%</div>
+            </div>
+            <input type="range" id="property-growth" min="0" max="100" step="1" value="30" oninput="updatePropertyGrowthLabel()" class="range">
 
-            <label for="rental-yield">Expected annual rental yield: </label>
-            <input type="range" id="rental-yield" min="0" max="20" step="1" value="10" oninput="updateRentalYieldLabel()">
-            <p>Rental Yield: <span id="rental-yield-value">10</span>%</p>
+            &nbsp;
 
-            <p>All projected values are based on the inputs and assume a 5-year holding period.</p>
+            <div class="lv">
+                <label for="rental-yield" class="label">Expected annual rental yield: </label>
+                <div><span id="rental-yield-value">10</span>%</div>
+            </div>
+            <input type="range" id="rental-yield" min="0" max="20" step="1" value="10" oninput="updateRentalYieldLabel()" class="range">
+
+            &nbsp;
+
+            <p style="font-size:small">All projected values are based on the inputs and assume a 5-year holding period.</p>
         </div>
 
         <!-- Right Side: Chart display -->
@@ -47,8 +59,67 @@ function investment_calculator()
     </div>
 
     <style>
-        .range{
-            accent-color: blue;
+
+        .lv{
+            display: flex;
+            justify-content: space-between;
+        }
+        .label{
+            font-size: 16px;
+        }
+        .range {
+            -webkit-appearance: none;
+            /* Chrome/Safari */
+            -moz-appearance: none;
+            /* Firefox */
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            /* Height of the range track */
+            border-radius: 5px;
+            background: linear-gradient(to right, #2196F3 50%, #e5e5e5 50%);
+            cursor: pointer;
+        }
+
+        /* WebKit Browsers (Chrome, Safari) */
+        .range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            background: #ffffff !important;
+            border: 6px solid #2196F3 !important;
+            height: 15px;
+            width: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Firefox Browsers */
+        .range::-moz-range-thumb {
+            -moz-appearance: none;
+            /* Required for Firefox */
+            background: #ffffff !important;
+            border: 6px solid #2196F3 !important;
+            height: 10px !important;
+            /* Adjust height */
+            width: 10px !important;
+            /* Adjust width */
+            border-radius: 50%;
+            cursor: pointer;
+            
+            /* Remove default border */
+        }
+
+        /* General for all browsers */
+        .range::-webkit-slider-runnable-track{
+            box-shadow: none !important;
+        }
+
+        .range::-moz-range-track {
+            width: 100%;
+            height: 5px;
+            /* Adjust height of the track */
+            border-radius: 5px;
+            box-shadow: none !important;
+            /* background: linear-gradient(to right, #2196F3 50%, #e5e5e5 50%); */
         }
     </style>
 
@@ -59,19 +130,29 @@ function investment_calculator()
         function updateInvestmentLabel() {
             var investment = document.getElementById('initial-investment').value;
             document.getElementById('investment-value').innerText = parseInt(investment).toLocaleString();
+            updateRangeBackground('initial-investment');
             calculateReturns();
         }
 
         function updatePropertyGrowthLabel() {
             var growth = document.getElementById('property-growth').value;
             document.getElementById('property-growth-value').innerText = growth;
+            updateRangeBackground('property-growth');
             calculateReturns();
         }
 
         function updateRentalYieldLabel() {
             var yield = document.getElementById('rental-yield').value;
             document.getElementById('rental-yield-value').innerText = yield;
+            updateRangeBackground('rental-yield');
             calculateReturns();
+        }
+
+        // Function to update range slider background color
+        function updateRangeBackground(rangeId) {
+            var slider = document.getElementById(rangeId);
+            var value = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+            slider.style.background = 'linear-gradient(to right, #2196F3 ' + value + '%, #EBEEF4 ' + value + '%)';
         }
 
         // Function to calculate and display projected returns
@@ -123,19 +204,22 @@ function investment_calculator()
                     datasets: [{
                             label: 'Initial Investment',
                             data: initialInvestmentArray,
-                            backgroundColor: '#3498db',
+                            backgroundColor: '#121C30',
+                            borderRadius:5,
                             stack: 'Stack 0'
                         },
                         {
                             label: 'Cumulative Rental Income',
                             data: rentalIncomeArray,
-                            backgroundColor: '#2ecc71',
+                            backgroundColor: '#03498A',
+                            borderRadius:5,
                             stack: 'Stack 0'
                         },
                         {
                             label: 'Annual Value Appreciation',
                             data: appreciationArray,
-                            backgroundColor: '#e74c3c',
+                            backgroundColor: '#2196F3',
+                            borderRadius:5,
                             stack: 'Stack 0'
                         }
                     ]
@@ -172,6 +256,9 @@ function investment_calculator()
         // Initial calculation when the page loads
         window.addEventListener('load', function() {
             calculateReturns(); // Calculate the returns initially
+            updateRangeBackground('initial-investment');
+            updateRangeBackground('property-growth');
+            updateRangeBackground('rental-yield');
         });
     </script>
 
