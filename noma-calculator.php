@@ -4,7 +4,7 @@ Plugin Name: Investment Calculator
 Plugin URI: https://yourwebsite.com/
 Description: A plugin to calculate projected returns on an investment and display data on a chart.
 Version: 1.0
-Author: Your Name
+Author: Malik Ibrahim
 Author URI: https://yourwebsite.com/
 License: GPL2
 */
@@ -23,12 +23,12 @@ function investment_calculator()
         <!-- Left Side: Sliders for inputs -->
         <div style="width: 45%; border: 1px solid #e5e5e5; padding: 20px; border-radius: 8px;">
             <h4>How much do you want to invest?</h4>
-            <div class="lv"> 
+            <div class="lv">
                 <label for="initial-investment" class="label">Initial Investment (KSH): </label>
                 <span id="investment-value">50,000</span>
             </div>
             <input type="range" id="initial-investment" min="10000" max="1000000" step="5000" value="50000" oninput="updateInvestmentLabel()" class="range">
-            
+
             &nbsp;
 
             <div class="lv">
@@ -47,26 +47,72 @@ function investment_calculator()
 
             &nbsp;
 
-            <p style="font-size:small">All projected values are based on the inputs and assume a 5-year holding period.</p>
+            <p style="font-size:small">All projected values are before any property costs and platform fees, and based on a 5-year holding
+                period. We expect the asset value to grow 30% over the next 5 years.</p>
         </div>
 
         <!-- Right Side: Chart display -->
         <div style="width: 50%;">
-            <h4>Projected investment return</h4>
-            <p id="projected-returns"></p>
+            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <p style="font-size:larger; font-weight:lighter; color:#5E6473; padding:0%; margin:0%">Projected investment returns of</p>
+                <p id="projected-returns" style="font-size:large; font-weight: 600; color: #121C30;"></p>
+
+            </div>
+            <div class="summary-container">
+                <div class="summary-item">
+                    <div style="display: flex; align-items:baseline">
+                        <span class="dot" style="background-color: #000;"></span>
+                        <span class="label investment" style="color: #5E6473; padding-left:5px;">Investment</span>
+                    </div>
+                    <div class="value">KSH <span id="investment-value2">50,000</span></div>
+                </div>
+                <div class="summary-item">
+                    <div style="display: flex; align-items:baseline">
+                        <span class="dot" style="background-color: #03498A;"></span>
+                        <span class="label rental-income" style="color: #5E6473; padding-left:5px;">Total rental income</span>
+                    </div>
+
+                    <div class="value">KSH <span id="total-rental-income">25,000</span></div>
+                </div>
+                <div class="summary-item">
+                    <div style="display: flex; align-items:baseline">
+                        <span class="dot" style="background-color: #2196F3;"></span>
+                        <span class="label value-appreciation" style="color: #5E6473; padding-left:5px;">Value appreciation</span>
+                    </div>
+
+                    <div class="value">KSH <span id="total-appreciation">15,000</span></div>
+                </div>
+            </div>
             <canvas id="investment-chart" width="600" height="300"></canvas>
         </div>
     </div>
 
     <style>
+        body,
+        h4,
+        p,
+        .label,
+        .value {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
 
-        .lv{
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-bottom: 5px;
+        }
+
+        .lv {
             display: flex;
             justify-content: space-between;
         }
-        .label{
+
+        .label {
             font-size: 16px;
         }
+
         .range {
             -webkit-appearance: none;
             /* Chrome/Safari */
@@ -104,12 +150,12 @@ function investment_calculator()
             /* Adjust width */
             border-radius: 50%;
             cursor: pointer;
-            
+
             /* Remove default border */
         }
 
         /* General for all browsers */
-        .range::-webkit-slider-runnable-track{
+        .range::-webkit-slider-runnable-track {
             box-shadow: none !important;
         }
 
@@ -121,6 +167,42 @@ function investment_calculator()
             box-shadow: none !important;
             /* background: linear-gradient(to right, #2196F3 50%, #e5e5e5 50%); */
         }
+
+        .summary-container {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            max-width: 600px;
+            margin: 5px auto;
+        }
+
+        .summary-item .label {
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        .summary-item .value {
+            font-weight: 700;
+            font-size: 15px;
+            color: #1A202C;
+        }
+
+        .investment {
+            font-weight: lighter;
+            font-size: small;
+        }
+
+        .rental-income {
+            font-weight: lighter;
+            font-size: small;
+        }
+
+        .value-appreciation {
+            font-weight: lighter;
+            font-size: small;
+        }
     </style>
 
     <script>
@@ -130,6 +212,7 @@ function investment_calculator()
         function updateInvestmentLabel() {
             var investment = document.getElementById('initial-investment').value;
             document.getElementById('investment-value').innerText = parseInt(investment).toLocaleString();
+            document.getElementById('investment-value2').innerText = parseInt(investment).toLocaleString();
             updateRangeBackground('initial-investment');
             calculateReturns();
         }
@@ -168,24 +251,40 @@ function investment_calculator()
             var initialInvestmentArray = [];
             var rentalIncomeArray = [];
             var appreciationArray = [];
+            var investmentGrowthArray = [];
 
             var totalRentalIncome = 0;
 
             for (var year = 1; year <= holdingPeriod; year++) {
-                var appreciation = investment * growthRate; // Annual property appreciation
-                totalRentalIncome += investment * rentalYield; // Cumulative rental income
+                // Property Growth Value (B4): (((1 + (B2 / 100)) ^ B6 * B1)) - B1
+                var propertyGrowthValue = Math.pow(1 + growthRate, year) * investment - investment;
 
-                appreciationArray.push(appreciation); // Value appreciation for each year
-                rentalIncomeArray.push(totalRentalIncome); // Cumulative rental income
+                // Rental Yield (B5): (B3/100) * B1 * B6
+                var rentalYieldValue = rentalYield * investment * year;
+
+                // Investment Growth (B7): (((1 + (B2 / 100)) ^ B6 * B1) + ((B3 / 100) * B1 * B6)) - B1
+                var investmentGrowth = propertyGrowthValue + rentalYieldValue; // No need to subtract investment here
+
+                // Growth Rate (B8): B7 / B1
+                var growthRateValue = investmentGrowth / investment;
+
+                totalRentalIncome = rentalYieldValue; // Cumulative rental income should just be the current year's rental yield
+
+                appreciationArray.push(propertyGrowthValue); // Value appreciation for each year
+                rentalIncomeArray.push(totalRentalIncome); // Current rental income
+                investmentGrowthArray.push(investmentGrowth); // Investment growth for each year
                 initialInvestmentArray.push(investment); // Initial investment remains constant
             }
 
             // Update projected returns for the 5th year
-            document.getElementById('projected-returns').innerText = 'KSH ' + (investment + appreciationArray[4] + rentalIncomeArray[4]).toLocaleString() + ' in 5 years';
+            document.getElementById('projected-returns').innerText = 'KSH ' + (investmentGrowthArray[4] + investment).toLocaleString() + ' in 5 years'; // Added initial investment
+            document.getElementById("total-rental-income").innerText = (rentalYield * investment * holdingPeriod).toLocaleString(); // Total rental income
+            document.getElementById("total-appreciation").innerText = appreciationArray[4].toLocaleString();
 
             // Update Chart
             displayChart(initialInvestmentArray, rentalIncomeArray, appreciationArray);
         }
+
 
         // Function to display chart and re-render it when inputs change
         function displayChart(initialInvestmentArray, rentalIncomeArray, appreciationArray) {
@@ -205,21 +304,21 @@ function investment_calculator()
                             label: 'Initial Investment',
                             data: initialInvestmentArray,
                             backgroundColor: '#121C30',
-                            borderRadius:5,
+                            borderRadius: 5,
                             stack: 'Stack 0'
                         },
                         {
                             label: 'Cumulative Rental Income',
                             data: rentalIncomeArray,
                             backgroundColor: '#03498A',
-                            borderRadius:5,
+                            borderRadius: 5,
                             stack: 'Stack 0'
                         },
                         {
                             label: 'Annual Value Appreciation',
                             data: appreciationArray,
                             backgroundColor: '#2196F3',
-                            borderRadius:5,
+                            borderRadius: 5,
                             stack: 'Stack 0'
                         }
                     ]
@@ -245,8 +344,8 @@ function investment_calculator()
                             intersect: false,
                         },
                         legend: {
-                            display: true,
-                            position: 'top',
+                            display: false,
+
                         }
                     }
                 }
@@ -276,3 +375,10 @@ function load_chartjs()
     wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', [], null, true);
 }
 add_action('wp_enqueue_scripts', 'load_chartjs');
+
+// Enqueue Google Fonts for Plus Jakarta Sans
+function load_plus_jakarta_sans()
+{
+    wp_enqueue_style('plus-jakarta-sans', 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap', [], null);
+}
+add_action('wp_enqueue_scripts', 'load_plus_jakarta_sans');
